@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>桃莉羊複製過程互動演示 (完整動畫版)</title>
+    <style>
+        body {
+            font-family: "Microsoft JhengHei", "PingFang TC", sans-serif;
+            background-color: #f0f3f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        #app {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+            width: 700px;
+            text-align: center;
+        }
+        h2 {
+            color: #2c3e50;
+            margin-top: 0;
+            font-size: 24px;
+        }
+        #stage {
+            width: 100%;
+            height: 400px;
+            background-color: #e6f7ff;
+            border-radius: 8px;
+            position: relative;
+            overflow: hidden;
+            border: 2px solid #b3e5fc;
+            margin-bottom: 20px;
+        }
+        /* 羊的樣式 - 強化顏色區分 */
+        .sheep {
+            position: absolute;
+            font-size: 16px;
+            font-weight: bold;
+            padding: 10px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+            opacity: 0;
+            transition: opacity 0.5s, transform 0.8s ease-out;
+        }
+        .sheep-icon { font-size: 40px; display: block; margin-bottom: 5px; }
+        
+        /* 羊A、C 為冷色調 (黑面羊) */
+        #sheepA { top: 20px; left: 20px; border: 3px solid #01579b; color: #01579b; } 
+        #sheepC { bottom: 20px; left: 20px; border: 3px solid #01579b; color: #01579b; } 
+        
+        /* 羊B、桃莉 為暖色調 (白面羊) */
+        #sheepB { top: 20px; right: 20px; border: 3px solid #ef6c00; color: #ef6c00; } 
+        #dolly { bottom: 20px; right: 20px; border: 4px solid #ef6c00; background: #fffde7; color: #ef6c00; z-index: 10; } 
+
+        /* 細胞樣式 */
+        .cell {
+            position: absolute;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            transition: all 0.8s ease-in-out;
+            color: #444;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        #eggCell {
+            width: 80px;
+            height: 80px;
+            background-color: #b3e5fc; /* 淺藍質 */
+            border: 3px solid #039be5;
+            top: 40px;
+            left: 150px;
+        }
+        #bodyCell {
+            width: 70px;
+            height: 70px;
+            background-color: #ffe0b2; /* 淺橙質 */
+            border: 3px solid #fb8c00;
+            top: 40px;
+            right: 150px;
+        }
+        
+        /* 細胞核 - 標示染色體套數 */
+        .nucleus {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            transition: all 0.8s ease-in-out;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        #eggNucleus { background-color: #0277bd; } /* 深藍核 */
+        #bodyNucleus { background-color: #e65100; } /* 深橙核 */
+        
+        /* 胚胎 */
+        #embryo {
+            position: absolute;
+            width: 90px;
+            height: 90px;
+            border-radius: 50%;
+            background-color: #b3e5fc; /* 淺藍質 */
+            border: 3px solid #039be5;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            box-sizing: border-box;
+            opacity: 0;
+            transition: all 0.8s ease-in-out;
+            top: 150px;
+            left: 300px;
+            font-size: 14px;
+            font-weight: bold;
+            color: #e65100; /* 深橙核文字 */
+        }
+        .embryo-label { font-size: 16px; margin-bottom: 5px; }
+        .small-cells-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+            padding: 5px;
+            width: 100%;
+        }
+        .small-cell {
+            width: 16px;
+            height: 16px;
+            background-color: #fb8c00;
+            border-radius: 50%;
+            margin: 2px;
+        }
+
+        /* 底部控制區 */
+        #status-box {
+            background: #fff;
+            border: 2px dashed #bdc3c7;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 18px;
+            font-weight: bold;
+            color: #2c3e50;
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1.4;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            margin: 0 10px;
+            color: white;
+            transition: background 0.2s, transform 0.1s;
+        }
+        button:active { transform: scale(0.98); }
+        button:disabled { background-color: #bdc3c7; cursor: not-allowed; }
+        #btnPrev { background-color: #78909c; }
+        #btnPrev:hover:not(:disabled) { background-color: #607d8b; }
+        #btnNext { background-color: #03a9f4; }
+        #btnNext:hover:not(:disabled) { background-color: #039be5; }
+        #btnReset { background-color: #ef5350; }
+        #btnReset:hover { background-color: #e53935; }
+
+        /* 誕生動畫特效 */
+        @keyframes birth-pulse {
+            0% { box-shadow: 0 2px 8px rgba(239, 108, 0, 0.3); }
+            50% { box-shadow: 0 2px 25px rgba(239, 108, 0, 0.9); }
+            100% { box-shadow: 0 2px 8px rgba(239, 108, 0, 0.3); }
+        }
+        .birth-active {
+            animation: birth-pulse 1s ease-in-out infinite;
+        }
+    </style>
+</head>
+<body>
+
+<div id="app">
+    <h2>🧬 桃莉羊複製過程互動演示 (完整動畫版)</h2>
+    
+    <div id="stage">
+        <div id="sheepA" class="sheep"><span class="sheep-icon">🐑</span>黑面母羊 A</div>
+        <div id="sheepB" class="sheep"><span class="sheep-icon">🐏</span>白面母羊 B</div>
+        <div id="sheepC" class="sheep"><span class="sheep-icon">🐑</span>代理孕母 C</div>
+        <div id="dolly" class="sheep"><span class="sheep-icon">🐏</span>桃莉羊</div>
+
+        <div id="eggCell" class="cell">
+            <div id="eggNucleus" class="nucleus">1n</div>
+        </div>
+        
+        <div id="bodyCell" class="cell">
+            <div id="bodyNucleus" class="nucleus">2n</div>
+        </div>
+
+        <div id="embryo">
+            <div class="embryo-label">(2n)</div>
+            <div class="small-cells-container">
+                <div class="small-cell"></div><div class="small-cell"></div><div class="small-cell"></div><div class="small-cell"></div>
+                <div class="small-cell"></div><div class="small-cell"></div><div class="small-cell"></div><div class="small-cell"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="status-box">點擊「下一步」開始演示</div>
+
+    <div>
+        <button id="btnPrev" disabled>上一步</button>
+        <button id="btnNext">下一步</button>
+        <button id="btnReset">重置</button>
+    </div>
+</div>
+
+<script>
+    const statusBox = document.getElementById('status-box');
+    const btnPrev = document.getElementById('btnPrev');
+    const btnNext = document.getElementById('btnNext');
+
+    const els = {
+        sheepA: document.getElementById('sheepA'),
+        sheepB: document.getElementById('sheepB'),
+        sheepC: document.getElementById('sheepC'),
+        dolly: document.getElementById('dolly'),
+        eggCell: document.getElementById('eggCell'),
+        eggNucleus: document.getElementById('eggNucleus'),
+        bodyCell: document.getElementById('bodyCell'),
+        bodyNucleus: document.getElementById('bodyNucleus'),
+        embryo: document.getElementById('embryo')
+    };
+
+    let currentStep = 0;
+
+    const steps = [
+        {
+            text: "點擊「下一步」開始演示",
+            action: () => { resetStyles(); }
+        },
+        {
+            text: "第一步：取出黑面母羊A的卵細胞<br><span style='color:#01579b;'>卵細胞(淺藍)</span>內有屬於黑面羊的<span style='color:#0277bd;'>細胞核(1n，深藍)</span>",
+            action: () => {
+                resetStyles();
+                els.sheepA.style.opacity = 1;
+                els.eggCell.style.opacity = 1;
+                els.eggCell.style.top = "150px";
+                els.eggCell.style.left = "150px";
+            }
+        },
+        {
+            text: "第二步：將卵細胞去核<br>吸出單套(1n)的細胞核，留下<span style='color:#039be5;'>空卵細胞</span>。",
+            action: () => {
+                els.eggNucleus.style.opacity = 0;
+                els.eggNucleus.style.transform = "scale(0)";
+            }
+        },
+        {
+            text: "第三步：取出白面母羊B的乳腺細胞<br>這是一般的體細胞，含有<span style='color:#e65100;'>雙套染色體(2n，深橙)</span>。",
+            action: () => {
+                els.sheepB.style.opacity = 1;
+                els.bodyCell.style.opacity = 1;
+                els.bodyCell.style.top = "150px";
+                els.bodyCell.style.right = "150px";
+                els.bodyNucleus.style.opacity = 1;
+            }
+        },
+        {
+            text: "第四步：將兩個細胞融合<br>將<span style='color:#fb8c00;'>白面母羊B的細胞核(2n)</span>植入<span style='color:#b3e5fc;'>黑面母羊A的空卵細胞</span>中。",
+            action: () => {
+                els.bodyCell.style.top = "160px";
+                els.bodyCell.style.right = "auto";
+                els.bodyCell.style.left = "315px";
+                els.bodyCell.style.opacity = 0; 
+                
+                els.eggCell.style.left = "300px";
+                
+                setTimeout(() => {
+                    els.bodyNucleus.style.transform = "scale(1.3)";
+                }, 300);
+            }
+        },
+        {
+            text: "第五步：細胞分裂成胚胎<br>電擊刺激重組細胞(2n)分裂，發育成早期胚胎。<span style='color:#e65100;'>遺傳物質皆來自白面母羊B(2n)</span>。",
+            action: () => {
+                els.eggCell.style.opacity = 0;
+                els.bodyNucleus.style.opacity = 0;
+                
+                els.embryo.style.opacity = 1;
+                els.embryo.style.top = "150px";
+                els.embryo.style.left = "300px";
+            }
+        },
+        {
+            text: "第六步：植入代理孕母羊C子宮<br>將含有白面母羊B細胞核的<span style='color:#039be5;'>胚胎(2n)</span>植入<span style='color:#01579b;'>黑面代理孕母羊C</span>體內。",
+            action: () => {
+                els.sheepC.style.opacity = 1;
+                els.embryo.style.top = "250px"; 
+                els.embryo.style.left = "130px";
+                els.embryo.style.transform = "scale(0.5)";
+                setTimeout(() => { els.embryo.style.opacity = 0; }, 600); 
+            }
+        },
+        {
+            text: "第七步：生出桃莉羊！<br><span style='color:#ef6c00; font-size:20px;'>桃莉是白面的(2n)！證明遺傳物質由母羊B提供。</span><br><small style='color:#555;'>注意看，桃莉是從黑面的代理孕母C羊身邊誕生的！</small>",
+            action: () => {
+                // 重點動畫：讓桃莉從代理孕母C (左下角) 移出
+                els.dolly.style.transition = "none"; // 暫時關閉動畫以設定初始位置
+                els.dolly.style.right = "auto";
+                els.dolly.style.left = "20px"; // C羊的位置
+                els.dolly.style.bottom = "20px";
+                els.dolly.style.transform = "scale(0.3)";
+                els.dolly.style.opacity = 0;
+
+                // 強制瀏覽器重繪 (Reflow)
+                void els.dolly.offsetWidth;
+
+                // 加上具有彈性感覺的過渡動畫並向右移出
+                els.dolly.style.transition = "all 1.2s cubic-bezier(0.175, 0.885, 0.32, 1.275)";
+                els.dolly.style.opacity = 1;
+                els.dolly.style.transform = "scale(1) translateX(250px)";
+
+                // 移動結束後加入發光閃爍特效
+                setTimeout(() => {
+                    els.dolly.classList.add('birth-active');
+                }, 1200);
+            }
+        }
+    ];
+
+    function resetStyles() {
+        Object.values(els).forEach(el => {
+            el.style.opacity = 0;
+            el.style.transform = "none";
+            el.classList.remove('birth-active');
+        });
+        
+        // 恢復細胞初始位置
+        els.eggCell.style.top = "40px"; els.eggCell.style.left = "150px";
+        els.bodyCell.style.top = "40px"; els.bodyCell.style.right = "150px"; els.bodyCell.style.left = "auto";
+        els.eggNucleus.style.opacity = 1; els.eggNucleus.style.transform = "scale(1)";
+        els.bodyNucleus.style.opacity = 1; els.bodyNucleus.style.transform = "scale(1)";
+        
+        els.embryo.style.top = "150px"; els.embryo.style.left = "300px"; els.embryo.style.transform = "scale(1)";
+
+        // 恢復桃莉初始位置
+        els.dolly.style.left = "";
+        els.dolly.style.right = "20px";
+        els.dolly.style.transition = "opacity 0.5s, transform 0.8s ease-out";
+    }
+
+    function updateState() {
+        btnPrev.disabled = (currentStep === 0);
+        btnNext.disabled = (currentStep === steps.length - 1);
+        statusBox.innerHTML = steps[currentStep].text;
+        
+        resetStyles();
+        for(let i = 0; i <= currentStep; i++) {
+            steps[i].action();
+        }
+    }
+
+    btnNext.addEventListener('click', () => {
+        if (currentStep < steps.length - 1) {
+            currentStep++;
+            updateState();
+        }
+    });
+
+    btnPrev.addEventListener('click', () => {
+        if (currentStep > 0) {
+            currentStep--;
+            updateState();
+        }
+    });
+
+    document.getElementById('btnReset').addEventListener('click', () => {
+        currentStep = 0;
+        updateState();
+    });
+
+    updateState();
+</script>
+</body>
+</html>
